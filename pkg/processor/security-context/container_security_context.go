@@ -31,21 +31,21 @@ func ProcessContainerSecurityContext(nameCamel string, specMap map[string]interf
 			castedContainer := container.(map[string]interface{})
 			containerName := strcase.ToLowerCamel(castedContainer["name"].(string))
 			if _, defined2 := castedContainer["securityContext"]; defined2 {
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, allowPrivEsc, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, privileged, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, roFS, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, gid, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, nonRoot, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, uid, false)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, caps, true)
-				setSecContextValue(nameCamel, containerName, castedContainer, container, values, seccompProfile, true)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, allowPrivEsc, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, privileged, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, roFS, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, gid, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, nonRoot, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, uid, false)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, caps, true)
+				setSecContextValue(nameCamel, containerName, castedContainer, values, seccompProfile, true)
 			}
 		}
 		unstructured.SetNestedSlice(specMap, containers, "containers")
 	}
 }
 
-func setSecContextValue(resourceName string, containerName string, castedContainer map[string]interface{}, container interface{}, values *helmify.Values, fieldName string, useRenderedHelmTemplate bool) {
+func setSecContextValue(resourceName string, containerName string, castedContainer map[string]interface{}, values *helmify.Values, fieldName string, useRenderedHelmTemplate bool) {
 	if castedContainer["securityContext"].(map[string]interface{})[fieldName] != nil {
 		unstructured.SetNestedField(*values, castedContainer["securityContext"].(map[string]interface{})[fieldName], resourceName, containerName, cscValueName, fieldName)
 
@@ -55,6 +55,6 @@ func setSecContextValue(resourceName string, containerName string, castedContain
 			valueString = fmt.Sprintf(helmTemplateRendered, resourceName, containerName, cscValueName, fieldName)
 		}
 
-		unstructured.SetNestedField(container.(map[string]interface{}), valueString, sc, fieldName)
+		unstructured.SetNestedField(castedContainer, valueString, sc, fieldName)
 	}
 }
