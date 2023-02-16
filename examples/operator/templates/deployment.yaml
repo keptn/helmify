@@ -60,19 +60,7 @@ spec:
           value: {{ .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
         name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
         resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10
           }}
         securityContext:
@@ -89,10 +77,6 @@ spec:
         runAsNonRoot: true
       serviceAccountName: {{ include "operator.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: DoNotSchedule
       volumes:
       - configMap:
           name: {{ include "operator.fullname" . }}-manager-config
@@ -101,5 +85,5 @@ spec:
         secret:
           secretName: {{ include "operator.fullname" . }}-secret-ca
 {{- if .Values.topologySpreadConstraints }}
-      topologySpreadConstraints: {{- include "tplvalues.render" (dict "value" .Values.controller-manager.topologySpreadConstraints "context" $) | nindent 8 }}
+      topologySpreadConstraints: {{- include "tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" $) | nindent 8 }}
 {{- end }}
