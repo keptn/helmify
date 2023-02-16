@@ -7,10 +7,10 @@ import (
 	"text/template"
 
 	"github.com/arttor/helmify/pkg/cluster"
+	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/arttor/helmify/pkg/processor"
 	"github.com/arttor/helmify/pkg/processor/imagePullSecrets"
-
-	"github.com/arttor/helmify/pkg/helmify"
+	"github.com/arttor/helmify/pkg/processor/probes"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
@@ -130,8 +130,11 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		depl.Spec.Template.Spec.Volumes[i].PersistentVolumeClaim.ClaimName = tempPVCName
 	}
 
+	// remove from spec things that will be processed separately
+	cleanSpec := cleanSpec(*depl.Spec.Template.Spec.DeepCopy())
+
 	// replace container resources with template to values.
-	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&depl.Spec.Template.Spec)
+	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&cleanSpec)
 	if err != nil {
 		return true, nil, err
 	}
@@ -139,19 +142,20 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	if err != nil {
 		return true, nil, err
 	}
+
 	for i := range containers {
 		containerName := strcase.ToLowerCamel((containers[i].(map[string]interface{})["name"]).(string))
 		res, exists, err := unstructured.NestedMap(values, nameCamel, containerName, "resources")
 		if err != nil {
 			return true, nil, err
 		}
-		if !exists || len(res) == 0 {
-			continue
+		if exists && len(res) > 0 {
+			err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%s.%s.resources | nindent 10 }}`, nameCamel, containerName), "resources")
+			if err != nil {
+				return true, nil, err
+			}
 		}
-		err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%s.%s.resources | nindent 10 }}`, nameCamel, containerName), "resources")
-		if err != nil {
-			return true, nil, err
-		}
+
 	}
 	err = unstructured.SetNestedSlice(specMap, containers, "containers")
 	if err != nil {
@@ -162,12 +166,18 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		imagePullSecrets.ProcessSpecMap(specMap, &values)
 	}
 
+	if appMeta.Config().Probes {
+		probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
+	}
+
 	spec, err := yamlformat.Marshal(specMap, 6)
 	if err != nil {
 		return true, nil, err
 	}
-	spec = strings.ReplaceAll(spec, "'", "")
 
+	spec = strings.ReplaceAll(spec, "'", "")
+	spec = strings.ReplaceAll(spec, "|\n        ", "")
+	spec = strings.ReplaceAll(spec, "|-\n        ", "")
 	return true, &result{
 		values: values,
 		data: struct {
@@ -186,6 +196,15 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 			Spec:           spec,
 		},
 	}, nil
+}
+
+func cleanSpec(spec corev1.PodSpec) corev1.PodSpec {
+
+	for i := 0; i < len(spec.Containers); i++ {
+		spec.Containers[i].LivenessProbe = nil
+		spec.Containers[i].ReadinessProbe = nil
+	}
+	return spec
 }
 
 func processReplicas(name string, deployment *appsv1.Deployment, values *helmify.Values) (string, error) {
@@ -208,6 +227,7 @@ func processPodSpec(name string, appMeta helmify.AppMetadata, pod *corev1.PodSpe
 	values := helmify.Values{}
 	for i, c := range pod.Containers {
 		processed, err := processPodContainer(name, appMeta, c, &values)
+
 		if err != nil {
 			return nil, err
 		}
@@ -248,9 +268,20 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 		return c, errors.Wrap(err, "unable to set deployment value field")
 	}
 
-	c, err = processEnv(name, appMeta, c, values)
-	if err != nil {
-		return c, err
+	for i := 0; i < len(c.Env); i++ {
+		if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.SecretKeyRef != nil {
+			c.Env[i].ValueFrom.SecretKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.SecretKeyRef.Name)
+		} else if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.ConfigMapKeyRef != nil {
+			c.Env[i].ValueFrom.ConfigMapKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.ConfigMapKeyRef.Name)
+		} else {
+
+			err = unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
+			if err != nil {
+				return c, errors.Wrap(err, "unable to set deployment value field")
+			}
+
+			c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
+		}
 	}
 
 	for _, e := range c.EnvFrom {
@@ -261,12 +292,14 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 			e.ConfigMapRef.Name = appMeta.TemplatedName(e.ConfigMapRef.Name)
 		}
 	}
+
 	c.Env = append(c.Env, corev1.EnvVar{
 		Name:  cluster.DomainEnv,
 		Value: fmt.Sprintf("{{ .Values.%s }}", cluster.DomainKey),
 	})
 	for k, v := range c.Resources.Requests {
 		err = unstructured.SetNestedField(*values, v.ToUnstructured(), name, containerName, "resources", "requests", k.String())
+
 		if err != nil {
 			return c, errors.Wrap(err, "unable to set container resources value")
 		}
@@ -277,26 +310,8 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 			return c, errors.Wrap(err, "unable to set container resources value")
 		}
 	}
-	return c, nil
-}
 
-func processEnv(name string, appMeta helmify.AppMetadata, c corev1.Container, values *helmify.Values) (corev1.Container, error) {
-	containerName := strcase.ToLowerCamel(c.Name)
-	for i := 0; i < len(c.Env); i++ {
-		if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.SecretKeyRef != nil {
-			c.Env[i].ValueFrom.SecretKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.SecretKeyRef.Name)
-		} else if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.ConfigMapKeyRef != nil {
-			c.Env[i].ValueFrom.ConfigMapKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.ConfigMapKeyRef.Name)
-		} else {
-
-			err := unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
-			if err != nil {
-				return c, errors.Wrap(err, "unable to set deployment value field")
-			}
-			c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
-		}
-	}
-	return c, nil
+	return c, err
 }
 
 type result struct {
