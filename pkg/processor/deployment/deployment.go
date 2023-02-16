@@ -9,6 +9,7 @@ import (
 	"github.com/arttor/helmify/pkg/cluster"
 	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/arttor/helmify/pkg/processor"
+	"github.com/arttor/helmify/pkg/processor/constraints"
 	"github.com/arttor/helmify/pkg/processor/imagePullSecrets"
 	"github.com/arttor/helmify/pkg/processor/probes"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
@@ -133,7 +134,6 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	// remove from spec things that will be processed separately
 	cleanSpec := cleanSpec(*depl.Spec.Template.Spec.DeepCopy())
 
-	// replace container resources with template to values.
 	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&cleanSpec)
 	if err != nil {
 		return true, nil, err
@@ -178,6 +178,7 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		return true, nil, err
 	}
 
+	spec = constraints.ProcessSpecMap(spec, &values, depl.Spec.Template.Spec)
 	spec = strings.ReplaceAll(spec, "'", "")
 	spec = strings.ReplaceAll(spec, "|\n        ", "")
 	spec = strings.ReplaceAll(spec, "|-\n        ", "")
@@ -207,6 +208,11 @@ func cleanSpec(spec corev1.PodSpec) corev1.PodSpec {
 		spec.Containers[i].LivenessProbe = nil
 		spec.Containers[i].ReadinessProbe = nil
 	}
+
+	spec.TopologySpreadConstraints = nil
+	spec.NodeSelector = nil
+	spec.Tolerations = nil
+
 	return spec
 }
 
