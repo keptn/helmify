@@ -5,6 +5,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const tolerations = "tolerations"
+const topology = "topologySpreadConstraints"
+const nodeSelector = "nodeSelector"
+
 const topologyExpression = "\n{{- if .Values.topologySpreadConstraints }}\n" +
 	"      topologySpreadConstraints: {{- include \"tplvalues.render\" (dict \"value\" .Values.topologySpreadConstraints \"context\" $) | nindent 8 }}\n" +
 	"{{- end }}\n"
@@ -21,23 +25,23 @@ const tolerationsExpression = "{{- if .Values.tolerations }}\n" +
 // already has one defined.
 func ProcessSpecMap(specMap string, values *helmify.Values, podspec corev1.PodSpec) string {
 
-	(*values)["topologySpreadConstraints"] = podspec.TopologySpreadConstraints
-	(*values)["nodeSelector"] = podspec.NodeSelector
-	(*values)["tolerations"] = podspec.Tolerations
+	(*values)[topology] = podspec.TopologySpreadConstraints
+	(*values)[nodeSelector] = podspec.NodeSelector
+	(*values)[tolerations] = podspec.Tolerations
 
-	topology := (*values)["topologySpreadConstraints"].([]corev1.TopologySpreadConstraint)
-	if len(topology) == 0 {
-		(*values)["topologySpreadConstraints"] = []interface{}{}
+	tp := (*values)[topology].([]corev1.TopologySpreadConstraint)
+	if len(tp) == 0 {
+		(*values)[topology] = []interface{}{}
 	}
-	nodeSelector := (*values)["nodeSelector"].(map[string]string)
-	if len(nodeSelector) == 0 {
-		(*values)["nodeSelector"] = map[string]string{}
+	ns := (*values)[nodeSelector].(map[string]string)
+	if len(ns) == 0 {
+		(*values)[nodeSelector] = map[string]string{}
 	}
 
-	tolerations := (*values)["tolerations"].([]corev1.Toleration)
+	tl := (*values)[tolerations].([]corev1.Toleration)
 
-	if len(tolerations) == 0 {
-		(*values)["tolerations"] = []interface{}{}
+	if len(tl) == 0 {
+		(*values)[tolerations] = []interface{}{}
 	}
 
 	return specMap + topologyExpression + nodeSelectorExpression + tolerationsExpression

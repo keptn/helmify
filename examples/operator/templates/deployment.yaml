@@ -61,8 +61,7 @@ spec:
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
         name: manager
-        resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10
-          }}
+        resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
         volumeMounts:
@@ -71,6 +70,26 @@ spec:
           subPath: controller_manager_config.yaml
         - mountPath: /my.ca
           name: secret-volume
+        {{- if .Values.controllerManager.manager.livenessProbe }}
+        livenessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.livenessProbe "context" $) | nindent 12 }}
+         {{- else }}
+        livenessProbe:
+         httpGet:
+           path: /healthz
+           port: 8081
+         initialDelaySeconds: 15
+         periodSeconds: 20
+        {{- end }}
+        {{- if .Values.controllerManager.manager.readinessProbe }}
+        readinessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.readinessProbe "context" $) | nindent 12 }}
+         {{- else }}
+        readinessProbe:
+         httpGet:
+           path: /readyz
+           port: 8081
+         initialDelaySeconds: 5
+         periodSeconds: 10
+        {{- end }}
       imagePullSecrets:
       - name: {{ include "operator.fullname" . }}-secret-registry-credentials
       securityContext:
@@ -86,4 +105,10 @@ spec:
           secretName: {{ include "operator.fullname" . }}-secret-ca
 {{- if .Values.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" $) | nindent 8 }}
+{{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "tplvalues.render" ( dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+{{- end }}
+{{- if .Values.tolerations }}
+      tolerations: {{- include "tplvalues.render" (dict "value" .Values.tolerations "context" .) | nindent 8 }}
 {{- end }}
