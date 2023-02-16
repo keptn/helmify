@@ -96,6 +96,10 @@ spec:
         runAsNonRoot: true
       serviceAccountName: {{ include "operator.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
       volumes:
       - configMap:
           name: {{ include "operator.fullname" . }}-manager-config
@@ -103,3 +107,6 @@ spec:
       - name: secret-volume
         secret:
           secretName: {{ include "operator.fullname" . }}-secret-ca
+{{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "tplvalues.render" (dict "value" .Values.controller-manager.topologySpreadConstraints "context" $) | nindent 8 }}
+{{- end }}

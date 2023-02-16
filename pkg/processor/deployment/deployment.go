@@ -7,10 +7,10 @@ import (
 	"text/template"
 
 	"github.com/arttor/helmify/pkg/cluster"
-	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/arttor/helmify/pkg/processor"
 	"github.com/arttor/helmify/pkg/processor/imagePullSecrets"
 	"github.com/arttor/helmify/pkg/processor/probes"
+	"github.com/arttor/helmify/pkg/processor/topologyConstraint"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
@@ -174,7 +174,6 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	if err != nil {
 		return true, nil, err
 	}
-
 	spec = strings.ReplaceAll(spec, "'", "")
 	spec = strings.ReplaceAll(spec, "|\n        ", "")
 	spec = strings.ReplaceAll(spec, "|-\n        ", "")

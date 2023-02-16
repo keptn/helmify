@@ -63,6 +63,7 @@ secretRegistryCredentials:
 secretVars:
   var1: ""
   var2: ""
+topologyConstraints: []
 webhookService:
   ports:
   - port: 443
