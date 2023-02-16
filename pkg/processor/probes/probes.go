@@ -17,7 +17,7 @@ const livenessProbe = "\n{{- if .Values.%[1]s.%[2]s.livenessProbe }}\n" +
 	"livenessProbe:\n%[3]s" +
 	"\n{{- end }}"
 
-const ReadinessProbe = "\n{{- if .Values.%[1]s.%[2]s.readinessProbe }}\n" +
+const readinessProbe = "\n{{- if .Values.%[1]s.%[2]s.readinessProbe }}\n" +
 	"readinessProbe: {{- include \"tplvalues.render\" (dict \"value\" .Values.%[1]s.%[2]s.readinessProbe \"context\" $) | nindent 12 }}\n" +
 	" {{- else }}\n" +
 	"readinessProbe:\n%[3]s" +
