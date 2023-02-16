@@ -134,6 +134,7 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	cleanSpec := cleanSpec(*depl.Spec.Template.Spec.DeepCopy())
 
 	// replace container resources with template to values.
+	cleanSpec := cleanSpec(*depl.Spec.Template.Spec.DeepCopy())
 	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&cleanSpec)
 	if err != nil {
 		return true, nil, err
@@ -174,6 +175,9 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	if err != nil {
 		return true, nil, err
 	}
+
+	fmt.Println(depl.Spec.Template.Spec.TopologySpreadConstraints)
+	spec = topologyConstraint.ProcessSpecMap(spec, &values, depl.Spec.Template.Spec.TopologySpreadConstraints)
 	spec = strings.ReplaceAll(spec, "'", "")
 	spec = strings.ReplaceAll(spec, "|\n        ", "")
 	spec = strings.ReplaceAll(spec, "|-\n        ", "")
@@ -195,15 +199,6 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 			Spec:           spec,
 		},
 	}, nil
-}
-
-func cleanSpec(spec corev1.PodSpec) corev1.PodSpec {
-
-	for i := 0; i < len(spec.Containers); i++ {
-		spec.Containers[i].LivenessProbe = nil
-		spec.Containers[i].ReadinessProbe = nil
-	}
-	return spec
 }
 
 func processReplicas(name string, deployment *appsv1.Deployment, values *helmify.Values) (string, error) {

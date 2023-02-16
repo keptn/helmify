@@ -1,19 +1,18 @@
 package topologyConstraint
 
 import (
-	"fmt"
-
 	"github.com/arttor/helmify/pkg/helmify"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const helmExpression = "\n{{- if .Values.topologySpreadConstraints }}\n" +
-	"      topologySpreadConstraints: {{- include \"tplvalues.render\" (dict \"value\" .Values.%s.topologySpreadConstraints \"context\" $) | nindent 8 }}\n" +
-	"{{- end }}"
+	"      topologySpreadConstraints: {{- include \"tplvalues.render\" (dict \"value\" .Values.topologySpreadConstraints \"context\" $) | nindent 8 }}\n" +
+	"{{- end }}\n"
 
 // ProcessSpecMap adds 'topologyConstraints' to the podSpec in specMap, if it doesn't
 // already has one defined.
-func ProcessSpecMap(name string, specMap string, values *helmify.Values) string {
+func ProcessSpecMap(specMap string, values *helmify.Values, constraints []corev1.TopologySpreadConstraint) string {
 
-	(*values)["topologyConstraints"] = []string{}
-	return specMap + fmt.Sprintf(helmExpression, name)
+	(*values)["topologySpreadConstraints"] = constraints
+	return specMap + helmExpression
 }

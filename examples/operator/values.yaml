@@ -57,13 +57,16 @@ pvc:
     storageClass: cust1-mypool-lim
     storageRequest: 2Gi
 secretCa:
-  caCrt: ""
+  caCrt: "a"
 secretRegistryCredentials:
-  dockerconfigjson: ""
+  dockerconfigjson: "a"
 secretVars:
-  var1: ""
-  var2: ""
-topologyConstraints: []
+  var1: "a"
+  var2: "a"
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
 webhookService:
   ports:
   - port: 443
