@@ -53,9 +53,9 @@ spec:
               key: VAR1
               name: {{ include "operator.fullname" . }}-secret-vars
         - name: VAR2
-          value: {{ .Values.controllerManager.manager.var2 }}
+          value: {{ .Values.controllerManager.manager.env.var2 }}
         - name: VAR3_MY_ENV
-          value: {{ .Values.controllerManager.manager.var3MyEnv }}
+          value: {{ .Values.controllerManager.manager.env.var3MyEnv }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
@@ -84,7 +84,7 @@ spec:
         - mountPath: /my.ca
           name: secret-volume
         {{- if .Values.controllerManager.manager.livenessProbe }}
-        livenessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.livenessProbe "context" $) | nindent 12 }}
+        livenessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.livenessProbe "context" $) | nindent 10 }}
          {{- else }}
         livenessProbe:
          httpGet:
@@ -94,7 +94,7 @@ spec:
          periodSeconds: 20
         {{- end }}
         {{- if .Values.controllerManager.manager.readinessProbe }}
-        readinessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.readinessProbe "context" $) | nindent 12 }}
+        readinessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.readinessProbe "context" $) | nindent 10 }}
          {{- else }}
         readinessProbe:
          httpGet:

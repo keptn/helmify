@@ -11,8 +11,8 @@ import (
 	"github.com/arttor/helmify/pkg/processor"
 	"github.com/arttor/helmify/pkg/processor/constraints"
 	"github.com/arttor/helmify/pkg/processor/imagePullSecrets"
-	securityContext "github.com/arttor/helmify/pkg/processor/security-context"
 	"github.com/arttor/helmify/pkg/processor/probes"
+	securityContext "github.com/arttor/helmify/pkg/processor/security-context"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
@@ -49,7 +49,7 @@ const selectorTempl = `%[1]s
 {{- include "%[2]s.selectorLabels" . | nindent 6 }}
 %[3]s`
 
-const envValue = "{{ .Values.%[1]s.%[2]s.%[3]s }}"
+const envValue = "{{ .Values.%[1]s.%[2]s.%[3]s.%[4]s }}"
 
 // New creates processor for k8s Deployment resource.
 func New() helmify.Processor {
@@ -167,11 +167,11 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		imagePullSecrets.ProcessSpecMap(specMap, &values)
 	}
 
+	securityContext.ProcessContainerSecurityContext(nameCamel, specMap, &values)
+
 	if appMeta.Config().Probes {
 		probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
 	}
-
-	securityContext.ProcessContainerSecurityContext(nameCamel, specMap, &values)
 
 	spec, err := yamlformat.Marshal(specMap, 6)
 	if err != nil {
@@ -283,13 +283,12 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 		} else if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.ConfigMapKeyRef != nil {
 			c.Env[i].ValueFrom.ConfigMapKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.ConfigMapKeyRef.Name)
 		} else {
-
 			err = unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
 			if err != nil {
 				return c, errors.Wrap(err, "unable to set deployment value field")
 			}
 
-			c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
+			c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
 		}
 	}
 
