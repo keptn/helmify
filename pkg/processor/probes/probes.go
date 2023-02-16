@@ -56,7 +56,7 @@ func ProcessSpecMap(name string, specMap map[string]interface{}, values *helmify
 				return err
 			}
 			strContainers[i] = strContainers[i].(string) +
-				fmt.Sprintf(ReadinessProbe, name, containerName, ready)
+				fmt.Sprintf(readinessProbe, name, containerName, ready)
 		}
 		setProbeField(name, pspec.Containers[i], values)
 	}
