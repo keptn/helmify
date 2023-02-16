@@ -11,6 +11,7 @@ import (
 	"github.com/arttor/helmify/pkg/processor"
 	"github.com/arttor/helmify/pkg/processor/constraints"
 	"github.com/arttor/helmify/pkg/processor/imagePullSecrets"
+	securityContext "github.com/arttor/helmify/pkg/processor/security-context"
 	"github.com/arttor/helmify/pkg/processor/probes"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
@@ -169,6 +170,8 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	if appMeta.Config().Probes {
 		probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
 	}
+
+	securityContext.ProcessContainerSecurityContext(nameCamel, specMap, &values)
 
 	spec, err := yamlformat.Marshal(specMap, 6)
 	if err != nil {

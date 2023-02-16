@@ -63,7 +63,20 @@ spec:
         name: manager
         resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10 }}
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: {{ .Values.controllerManager.manager.containerSecurityContext.allowPrivilegeEscalation
+            }}
+          capabilities: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.containerSecurityContext.capabilities
+            "context" $) | nindent 12 }}
+          privileged: {{ .Values.controllerManager.manager.containerSecurityContext.privileged
+            }}
+          readOnlyRootFilesystem: {{ .Values.controllerManager.manager.containerSecurityContext.readOnlyRootFilesystem
+            }}
+          runAsNonRoot: {{ .Values.controllerManager.manager.containerSecurityContext.runAsNonRoot
+            }}
+          runAsUser: {{ .Values.controllerManager.manager.containerSecurityContext.runAsUser
+            }}
+          seccompProfile: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.containerSecurityContext.seccompProfile
+            "context" $) | nindent 12 }}
         volumeMounts:
         - mountPath: /controller_manager_config.yaml
           name: manager-config
