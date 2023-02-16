@@ -2,14 +2,17 @@ package metadata
 
 import (
 	"fmt"
-	"github.com/arttor/helmify/pkg/config"
 	"strings"
+
+	"github.com/arttor/helmify/pkg/config"
 
 	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+const valuesTempl = `{{- include "tplvalues.render" (dict "value" .Values.%s.%s.%s "context" $)}}`
 
 const nameTeml = `{{ include "%s.fullname" . }}-%s`
 
@@ -94,6 +97,11 @@ func (a *Service) TemplatedName(name string) string {
 func (a *Service) TemplatedString(str string) string {
 	name := a.TrimName(str)
 	return fmt.Sprintf(nameTeml, a.conf.ChartName, name)
+}
+
+func (a *Service) TemplatedValue(container string, str string) string {
+	name := a.TrimName(str)
+	return fmt.Sprintf(valuesTempl, a.conf.ChartName, container, name)
 }
 
 func extractAppNamespace(obj *unstructured.Unstructured) string {
