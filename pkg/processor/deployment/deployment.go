@@ -11,6 +11,7 @@ import (
 	"github.com/keptn/helmify/pkg/helmify"
 	"github.com/keptn/helmify/pkg/processor"
 	"github.com/keptn/helmify/pkg/processor/constraints"
+	"github.com/keptn/helmify/pkg/processor/imagePullPolicy"
 	"github.com/keptn/helmify/pkg/processor/imagePullSecrets"
 	"github.com/keptn/helmify/pkg/processor/probes"
 	securityContext "github.com/keptn/helmify/pkg/processor/security-context"
@@ -169,6 +170,11 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 
 	securityContext.ProcessContainerSecurityContext(nameCamel, specMap, &values)
 
+	err = imagePullPolicy.ProcessSpecMap(nameCamel, specMap, &values)
+	if err != nil {
+		return true, nil, err
+	}
+
 	if appMeta.Config().Probes {
 		probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
 	}
@@ -267,7 +273,6 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 	repo, tag := c.Image[:index], c.Image[index+1:]
 	containerName := strcase.ToLowerCamel(c.Name)
 	c.Image = fmt.Sprintf("{{ .Values.%[1]s.%[2]s.image.repository }}:{{ .Values.%[1]s.%[2]s.image.tag | default .Chart.AppVersion }}", name, containerName)
-
 	err := unstructured.SetNestedField(*values, repo, name, containerName, "image", "repository")
 	if err != nil {
 		return c, errors.Wrap(err, "unable to set deployment value field")
@@ -318,7 +323,6 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 			return c, errors.Wrap(err, "unable to set container resources value")
 		}
 	}
-
 	return c, err
 }
 

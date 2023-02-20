@@ -60,6 +60,7 @@ spec:
           value: {{ .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.controllerManager.manager.imagePullPolicy }}
         name: manager
         resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10 }}
         securityContext:
