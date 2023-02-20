@@ -1,7 +1,7 @@
 package constraints
 
 import (
-	"github.com/arttor/helmify/pkg/helmify"
+	"github.com/keptn/helmify/pkg/helmify"
 	corev1 "k8s.io/api/core/v1"
 )
 
