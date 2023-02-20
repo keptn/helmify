@@ -3,9 +3,10 @@ package crd
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -14,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/keptn/helmify/pkg/helmify"
+	yamlformat "github.com/keptn/helmify/pkg/yaml"
 )
 
 const crdTeml = `apiVersion: apiextensions.k8s.io/v1
