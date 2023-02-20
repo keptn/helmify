@@ -1,16 +1,17 @@
 package secret
 
 import (
-	"github.com/arttor/helmify/pkg/format"
 	"io"
 	"strings"
 	"text/template"
 
-	"github.com/arttor/helmify/pkg/processor"
+	"github.com/keptn/helmify/pkg/format"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/keptn/helmify/pkg/processor"
+
 	"github.com/iancoleman/strcase"
+	"github.com/keptn/helmify/pkg/helmify"
+	yamlformat "github.com/keptn/helmify/pkg/yaml"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

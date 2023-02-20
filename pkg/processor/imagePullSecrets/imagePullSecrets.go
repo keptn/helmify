@@ -1,6 +1,6 @@
 package imagePullSecrets
 
-import "github.com/arttor/helmify/pkg/helmify"
+import "github.com/keptn/helmify/pkg/helmify"
 
 const helmExpression = "{{ .Values.imagePullSecrets | default list | toJson }}"
 
@@ -12,5 +12,4 @@ func ProcessSpecMap(specMap map[string]interface{}, values *helmify.Values) {
 		specMap["imagePullSecrets"] = helmExpression
 		(*values)["imagePullSecrets"] = []string{}
 	}
-
 }

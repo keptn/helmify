@@ -23,6 +23,8 @@ type Config struct {
 	Crd bool
 	// ImagePullSecrets flag
 	ImagePullSecrets bool
+	// Probes flag if true the probes will be parametrised
+	Probes bool
 }
 
 func (c *Config) Validate() error {
