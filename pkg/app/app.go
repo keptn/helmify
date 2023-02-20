@@ -9,19 +9,19 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/arttor/helmify/pkg/config"
-	"github.com/arttor/helmify/pkg/decoder"
-	"github.com/arttor/helmify/pkg/helm"
-	"github.com/arttor/helmify/pkg/processor"
-	"github.com/arttor/helmify/pkg/processor/configmap"
-	"github.com/arttor/helmify/pkg/processor/crd"
-	"github.com/arttor/helmify/pkg/processor/daemonset"
-	"github.com/arttor/helmify/pkg/processor/deployment"
-	"github.com/arttor/helmify/pkg/processor/rbac"
-	"github.com/arttor/helmify/pkg/processor/secret"
-	"github.com/arttor/helmify/pkg/processor/service"
-	"github.com/arttor/helmify/pkg/processor/storage"
-	"github.com/arttor/helmify/pkg/processor/webhook"
+	"github.com/keptn/helmify/pkg/config"
+	"github.com/keptn/helmify/pkg/decoder"
+	"github.com/keptn/helmify/pkg/helm"
+	"github.com/keptn/helmify/pkg/processor"
+	"github.com/keptn/helmify/pkg/processor/configmap"
+	"github.com/keptn/helmify/pkg/processor/crd"
+	"github.com/keptn/helmify/pkg/processor/daemonset"
+	"github.com/keptn/helmify/pkg/processor/deployment"
+	"github.com/keptn/helmify/pkg/processor/rbac"
+	"github.com/keptn/helmify/pkg/processor/secret"
+	"github.com/keptn/helmify/pkg/processor/service"
+	"github.com/keptn/helmify/pkg/processor/storage"
+	"github.com/keptn/helmify/pkg/processor/webhook"
 )
 
 // Start - application entrypoint for processing input to a Helm chart.

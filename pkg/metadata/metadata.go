@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arttor/helmify/pkg/config"
+	"github.com/keptn/helmify/pkg/config"
 
-	"github.com/arttor/helmify/pkg/helmify"
+	"github.com/keptn/helmify/pkg/helmify"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

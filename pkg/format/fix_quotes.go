@@ -5,7 +5,7 @@ import (
 )
 
 // FixUnterminatedQuotes check for Unterminated Quotes in helm templated strings
-// See https://github.com/arttor/helmify/issues/12
+// See https://github.com/keptn/helmify/issues/12
 func FixUnterminatedQuotes(in string) string {
 	sb := strings.Builder{}
 	hasUntermQuotes := false

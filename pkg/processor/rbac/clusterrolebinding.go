@@ -5,10 +5,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/arttor/helmify/pkg/processor"
+	"github.com/keptn/helmify/pkg/processor"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/keptn/helmify/pkg/helmify"
+	yamlformat "github.com/keptn/helmify/pkg/yaml"
 	"github.com/pkg/errors"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
