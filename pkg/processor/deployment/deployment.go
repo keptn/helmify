@@ -170,7 +170,11 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 	securityContext.ProcessContainerSecurityContext(nameCamel, specMap, &values)
 
 	if appMeta.Config().Probes {
-		probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
+		err := probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
+		if err != nil {
+			return true, nil, err
+		}
+
 	}
 
 	spec, err := yamlformat.Marshal(specMap, 6)
@@ -277,19 +281,9 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 		return c, errors.Wrap(err, "unable to set deployment value field")
 	}
 
-	for i := 0; i < len(c.Env); i++ {
-		if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.SecretKeyRef != nil {
-			c.Env[i].ValueFrom.SecretKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.SecretKeyRef.Name)
-		} else if c.Env[i].ValueFrom != nil && c.Env[i].ValueFrom.ConfigMapKeyRef != nil {
-			c.Env[i].ValueFrom.ConfigMapKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.ConfigMapKeyRef.Name)
-		} else {
-			err = unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
-			if err != nil {
-				return c, errors.Wrap(err, "unable to set deployment value field")
-			}
-
-			c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
-		}
+	c, err = processEnv(name, appMeta, c, values)
+	if err != nil {
+		return c, err
 	}
 
 	for _, e := range c.EnvFrom {
@@ -320,6 +314,30 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 	}
 
 	return c, err
+}
+
+func processEnv(name string, appMeta helmify.AppMetadata, c corev1.Container, values *helmify.Values) (corev1.Container, error) {
+	containerName := strcase.ToLowerCamel(c.Name)
+	for i := 0; i < len(c.Env); i++ {
+		if c.Env[i].ValueFrom != nil {
+			switch {
+			case c.Env[i].ValueFrom.SecretKeyRef != nil:
+				c.Env[i].ValueFrom.SecretKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.SecretKeyRef.Name)
+			case c.Env[i].ValueFrom.ConfigMapKeyRef != nil:
+				c.Env[i].ValueFrom.ConfigMapKeyRef.Name = appMeta.TemplatedName(c.Env[i].ValueFrom.ConfigMapKeyRef.Name)
+			case c.Env[i].ValueFrom.FieldRef != nil, c.Env[i].ValueFrom.ResourceFieldRef != nil:
+				// nothing to change here, keep the original value
+			}
+			continue
+		}
+
+		err := unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
+		if err != nil {
+			return c, errors.Wrap(err, "unable to set deployment value field")
+		}
+		c.Env[i].Value = fmt.Sprintf(envValue, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
+	}
+	return c, nil
 }
 
 type result struct {
