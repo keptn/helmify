@@ -21,6 +21,7 @@ controllerManager:
     image:
       repository: controller
       tag: latest
+    imagePullPolicy: Always
     livenessProbe:
       httpGet:
         path: /healthz

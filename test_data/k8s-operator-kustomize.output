@@ -629,6 +629,7 @@ spec:
         - name: VAR3_MY_ENV
           value: "ciao"
         image: controller:latest
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /healthz
