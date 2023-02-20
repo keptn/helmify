@@ -3,8 +3,8 @@ package security_context
 import (
 	"fmt"
 
-	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/iancoleman/strcase"
+	"github.com/keptn/helmify/pkg/helmify"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
