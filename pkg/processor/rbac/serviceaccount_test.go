@@ -3,9 +3,9 @@ package rbac
 import (
 	"testing"
 
-	"github.com/arttor/helmify/pkg/metadata"
+	"github.com/keptn/helmify/pkg/metadata"
 
-	"github.com/arttor/helmify/internal"
+	"github.com/keptn/helmify/internal"
 	"github.com/stretchr/testify/assert"
 )
 

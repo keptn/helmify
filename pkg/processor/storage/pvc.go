@@ -1,18 +1,19 @@
 package storage
 
 import (
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
-	"github.com/iancoleman/strcase"
-	"github.com/pkg/errors"
 	"io"
+	"strings"
+	"text/template"
+
+	"github.com/iancoleman/strcase"
+	"github.com/keptn/helmify/pkg/helmify"
+	"github.com/keptn/helmify/pkg/processor"
+	yamlformat "github.com/keptn/helmify/pkg/yaml"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"strings"
-	"text/template"
 )
 
 var pvcTempl, _ = template.New("pvc").Parse(

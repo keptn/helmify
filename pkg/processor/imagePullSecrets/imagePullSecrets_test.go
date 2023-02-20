@@ -3,7 +3,7 @@ package imagePullSecrets
 import (
 	"testing"
 
-	"github.com/arttor/helmify/pkg/helmify"
+	"github.com/keptn/helmify/pkg/helmify"
 	"github.com/stretchr/testify/assert"
 )
 
