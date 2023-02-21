@@ -2,79 +2,103 @@ package probes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/keptn/helmify/pkg/helmify"
 	yamlformat "github.com/keptn/helmify/pkg/yaml"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const livenessProbe = "\n{{- if .Values.%[1]s.%[2]s.livenessProbe }}\n" +
+const livenessProbe = "livenessProbe"
+const readinessProbe = "readinessProbe"
+
+const livenessProbeTemplate = "\n{{- if .Values.%[1]s.%[2]s.livenessProbe }}\n" +
 	"livenessProbe: {{- include \"tplvalues.render\" (dict \"value\" .Values.%[1]s.%[2]s.livenessProbe \"context\" $) | nindent 10 }}\n" +
 	" {{- else }}\n" +
 	"livenessProbe:\n%[3]s" +
 	"\n{{- end }}"
 
-const readinessProbe = "\n{{- if .Values.%[1]s.%[2]s.readinessProbe }}\n" +
+const readinessProbeTemplate = "\n{{- if .Values.%[1]s.%[2]s.readinessProbe }}\n" +
 	"readinessProbe: {{- include \"tplvalues.render\" (dict \"value\" .Values.%[1]s.%[2]s.readinessProbe \"context\" $) | nindent 10 }}\n" +
 	" {{- else }}\n" +
 	"readinessProbe:\n%[3]s" +
 	"\n{{- end }}"
 
 // ProcessSpecMap adds 'probes' to the Containers in specMap, if they are defined
-func ProcessSpecMap(name string, specMap map[string]interface{}, values *helmify.Values, pspec corev1.PodSpec) error {
+func ProcessSpecMap(name string, specMap map[string]interface{}, values *helmify.Values) (string, error) {
 
-	strContainers := make([]interface{}, len(pspec.Containers))
 	cs, _, err := unstructured.NestedSlice(specMap, "containers")
+
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	for i := range cs {
-		containerName := strcase.ToLowerCamel(pspec.Containers[i].Name)
-		var ready, live string
-		content, err := yamlformat.Marshal(cs[i], 0)
+	strContainers := make([]interface{}, len(cs))
+	for i, c := range cs {
+		castedContainer := c.(map[string]interface{})
+		strContainers[i], err = setProbesTemplates(name, castedContainer, values)
 		if err != nil {
-			return err
+			return "", err
 		}
-		strContainers[i] = content
-		if pspec.Containers[i].LivenessProbe != nil {
-
-			live, err = yamlformat.Marshal(pspec.Containers[i].LivenessProbe, 1)
-			if err != nil {
-				return err
-			}
-			strContainers[i] = strContainers[i].(string) +
-				fmt.Sprintf(livenessProbe, name, containerName, live)
-		}
-		if pspec.Containers[i].ReadinessProbe != nil {
-
-			ready, err = yamlformat.Marshal(pspec.Containers[i].ReadinessProbe, 1)
-			if err != nil {
-				return err
-			}
-			strContainers[i] = strContainers[i].(string) +
-				fmt.Sprintf(readinessProbe, name, containerName, ready)
-		}
-		setProbeField(name, pspec.Containers[i], values)
 	}
-	unstructured.SetNestedSlice(specMap, strContainers, "containers")
+	specMap["containers"] = strContainers
+	specs, err := yamlformat.Marshal(specMap, 6)
+	if err != nil {
+		return "", err
+	}
+	res := strings.ReplaceAll(string(specs), "|\n        ", "")
+	res = strings.ReplaceAll(res, "|-\n        ", "")
 
-	return err
+	return res, nil
 }
 
-func setProbeField(name string, c corev1.Container, values *helmify.Values) corev1.Container {
+func setProbesTemplates(name string, castedContainer map[string]interface{}, values *helmify.Values) (string, error) {
 
-	containerName := strcase.ToLowerCamel(c.Name)
-	if c.LivenessProbe != nil {
-		ready, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(c.LivenessProbe)
-		unstructured.SetNestedField(*values, ready, name, containerName, "livenessProbe")
+	var ready, live string
+	var err error
+	if _, defined := castedContainer[livenessProbe]; defined {
+		live, err = setProbe(name, castedContainer, values, livenessProbe)
+		if err != nil {
+			return "", err
+		}
+		delete(castedContainer, livenessProbe)
 	}
-	if c.ReadinessProbe != nil {
-		ready, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(c.ReadinessProbe)
-		unstructured.SetNestedField(*values, ready, name, containerName, "readinessProbe")
+	if _, defined := castedContainer[readinessProbe]; defined {
+		ready, err = setProbe(name, castedContainer, values, readinessProbe)
+		if err != nil {
+			return "", err
+		}
+		delete(castedContainer, readinessProbe)
 	}
-	return c
+	return setMap(name, castedContainer, live, ready)
+
+}
+
+func setMap(name string, castedContainer map[string]interface{}, live string, ready string) (string, error) {
+	containerName := strcase.ToLowerCamel(castedContainer["name"].(string))
+	content, err := yamlformat.Marshal(castedContainer, 0)
+	if err != nil {
+		return "", err
+	}
+	strContainer := string(content)
+	if live != "" {
+		strContainer = strContainer + fmt.Sprintf(livenessProbeTemplate, name, containerName, live)
+	}
+	if ready != "" {
+		strContainer = strContainer + fmt.Sprintf(readinessProbeTemplate, name, containerName, ready)
+	}
+
+	return strContainer, nil
+}
+
+func setProbe(name string, castedContainer map[string]interface{}, values *helmify.Values, probe string) (string, error) {
+	containerName := strcase.ToLowerCamel(castedContainer["name"].(string))
+	templatedProbe, err := yamlformat.Marshal(castedContainer[probe], 1)
+	if err != nil {
+		return "", err
+	}
+
+	return templatedProbe, unstructured.SetNestedField(*values, castedContainer[probe], name, containerName, probe)
+
 }
