@@ -56,13 +56,14 @@ spec:
               key: VAR1
               name: {{ include "operator.fullname" . }}-my-operator-secret-vars
         - name: VAR2
-          value: {{ .Values.myOperatorControllerManager.manager.env.var2 }}
+          value: {{ .Values.myOperatorControllerManager.manager.env.var2 | quote }}
         - name: VAR3_MY_ENV
-          value: {{ .Values.myOperatorControllerManager.manager.env.var3MyEnv }}
+          value: {{ .Values.myOperatorControllerManager.manager.env.var3MyEnv | quote }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
         image: {{ .Values.myOperatorControllerManager.manager.image.repository }}:{{ .Values.myOperatorControllerManager.manager.image.tag
           | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.myOperatorControllerManager.manager.imagePullPolicy }}
         name: manager
         resources: {{- toYaml .Values.myOperatorControllerManager.manager.resources | nindent
           10 }}
