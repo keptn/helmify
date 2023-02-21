@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "operator.fullname" . }}-my-operator-controller-manager-metrics-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    control-plane: controller-manager
+  {{- include "operator.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.myOperatorControllerManagerMetricsService.type }}
+  selector:
+    control-plane: controller-manager
+  {{- include "operator.selectorLabels" . | nindent 4 }}
+  ports:
+	{{- .Values.myOperatorControllerManagerMetricsService.ports | toYaml | nindent 2 -}}
