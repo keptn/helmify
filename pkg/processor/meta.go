@@ -47,6 +47,9 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 		}
 	}
 	templatedName := appMeta.TemplatedName(obj.GetName())
+	//if obj.GetKind() == "APIService" {
+	//	templatedName = obj.GetName()
+	//}
 	apiVersion, kind := obj.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
 	metaStr := fmt.Sprintf(metaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), labels, annotations)
 	metaStr = strings.Trim(metaStr, " \n")
