@@ -44,7 +44,10 @@ controllerManager:
   nodeSelector: {}
   replicas: 1
   tolerations: []
-  topologySpreadConstraints: []
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
 kubernetesClusterDomain: cluster.local
 managerConfig:
   controllerManagerConfigYaml:

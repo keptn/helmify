@@ -133,10 +133,7 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		depl.Spec.Template.Spec.Volumes[i].PersistentVolumeClaim.ClaimName = tempPVCName
 	}
 
-	// remove from spec things that will be processed separately
-	cleanSpec := cleanSpec(*depl.Spec.Template.Spec.DeepCopy())
-
-	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&cleanSpec)
+	specMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&depl.Spec.Template.Spec)
 	if err != nil {
 		return true, nil, err
 	}
@@ -175,17 +172,18 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		return true, nil, err
 	}
 
+	constraints.ProcessSpecMap(nameCamel, specMap, &values)
+	spec := ""
 	if appMeta.Config().Probes {
-		err := probes.ProcessSpecMap(nameCamel, specMap, &values, depl.Spec.Template.Spec)
+		spec, err = probes.ProcessSpecMap(nameCamel, specMap, &values)
 		if err != nil {
 			return true, nil, err
 		}
-
 	}
-	spec := constraints.ProcessSpecMap(nameCamel, specMap, &values)
+
+	spec = spec + constraints.TopologyExpression + constraints.NodeSelectorExpression + constraints.TolerationsExpression
 	spec = strings.ReplaceAll(spec, "'", "")
-	spec = strings.ReplaceAll(spec, "|\n        ", "")
-	spec = strings.ReplaceAll(spec, "|-\n        ", "")
+
 	return true, &result{
 		values: values,
 		data: struct {
@@ -204,20 +202,6 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 			Spec:           spec,
 		},
 	}, nil
-}
-
-func cleanSpec(spec corev1.PodSpec) corev1.PodSpec {
-
-	for i := 0; i < len(spec.Containers); i++ {
-		spec.Containers[i].LivenessProbe = nil
-		spec.Containers[i].ReadinessProbe = nil
-	}
-
-	spec.TopologySpreadConstraints = nil
-	spec.NodeSelector = nil
-	spec.Tolerations = nil
-
-	return spec
 }
 
 func processReplicas(name string, deployment *appsv1.Deployment, values *helmify.Values) (string, error) {
