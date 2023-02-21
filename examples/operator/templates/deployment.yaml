@@ -56,9 +56,9 @@ spec:
               key: VAR1
               name: {{ include "operator.fullname" . }}-my-operator-secret-vars
         - name: VAR2
-          value: {{ .Values.myOperatorControllerManager.manager.env.var2 | quote }}
+          value: {{ .Values.myOperatorControllerManager.manager.env.var2 }}
         - name: VAR3_MY_ENV
-          value: {{ .Values.myOperatorControllerManager.manager.env.var3MyEnv | quote }}
+          value: {{ .Values.myOperatorControllerManager.manager.env.var3MyEnv }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
         image: {{ .Values.myOperatorControllerManager.manager.image.repository }}:{{ .Values.myOperatorControllerManager.manager.image.tag
