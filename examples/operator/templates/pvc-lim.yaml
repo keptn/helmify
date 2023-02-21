@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "operator.fullname" . }}-my-operator-pvc-lim
+  name: {{ include "operator.fullname" . }}-pvc-lim
   namespace: {{ .Release.Namespace | quote }}
   labels:
   {{- include "operator.labels" . | nindent 4 }}
@@ -10,5 +10,5 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.pvc.myOperatorPvcLim.storageRequest | quote }}
-  storageClassName: {{ .Values.pvc.myOperatorPvcLim.storageClass | quote }}
+      storage: {{ .Values.pvc.pvcLim.storageRequest | quote }}
+  storageClassName: {{ .Values.pvc.pvcLim.storageClass | quote }}

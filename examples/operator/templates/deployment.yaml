@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "operator.fullname" . }}-my-operator-controller-manager
+  name: {{ include "operator.fullname" . }}-controller-manager
   namespace: {{ .Release.Namespace | quote }}
   labels:
   {{- include "operator.labels" . | nindent 4 }}
@@ -9,13 +9,13 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "operator.fullname" . }}-my-operator-controller-manager
+  name: {{ include "operator.fullname" . }}-controller-manager
   namespace: {{ .Release.Namespace | quote }}
   labels:
     control-plane: controller-manager
   {{- include "operator.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.myOperatorControllerManager.replicas }}
+  replicas: {{ .Values.controllerManager.replicas }}
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -35,9 +35,8 @@ spec:
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
-        image: {{ .Values.myOperatorControllerManager.kubeRbacProxy.image.repository }}:{{
-          .Values.myOperatorControllerManager.kubeRbacProxy.image.tag | default .Chart.AppVersion
-          }}
+        image: {{ .Values.controllerManager.kubeRbacProxy.image.repository }}:{{ .Values.controllerManager.kubeRbacProxy.image.tag
+          | default .Chart.AppVersion }}
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -54,33 +53,32 @@ spec:
           valueFrom:
             secretKeyRef:
               key: VAR1
-              name: {{ include "operator.fullname" . }}-my-operator-secret-vars
+              name: {{ include "operator.fullname" . }}-secret-vars
         - name: VAR2
-          value: {{ .Values.myOperatorControllerManager.manager.env.var2 | quote }}
+          value: {{ .Values.controllerManager.manager.env.var2 | quote }}
         - name: VAR3_MY_ENV
-          value: {{ .Values.myOperatorControllerManager.manager.env.var3MyEnv | quote }}
+          value: {{ .Values.controllerManager.manager.env.var3MyEnv | quote }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
-        image: {{ .Values.myOperatorControllerManager.manager.image.repository }}:{{ .Values.myOperatorControllerManager.manager.image.tag
+        image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
-        imagePullPolicy: {{ .Values.myOperatorControllerManager.manager.imagePullPolicy }}
+        imagePullPolicy: {{ .Values.controllerManager.manager.imagePullPolicy }}
         name: manager
-        resources: {{- toYaml .Values.myOperatorControllerManager.manager.resources | nindent
-          10 }}
+        resources: {{- toYaml .Values.controllerManager.manager.resources | nindent 10 }}
         securityContext:
-          allowPrivilegeEscalation: {{ .Values.myOperatorControllerManager.manager.containerSecurityContext.allowPrivilegeEscalation
+          allowPrivilegeEscalation: {{ .Values.controllerManager.manager.containerSecurityContext.allowPrivilegeEscalation
             }}
-          capabilities: {{- include "tplvalues.render" (dict "value" .Values.myOperatorControllerManager.manager.containerSecurityContext.capabilities
+          capabilities: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.containerSecurityContext.capabilities
             "context" $) | nindent 12 }}
-          privileged: {{ .Values.myOperatorControllerManager.manager.containerSecurityContext.privileged
+          privileged: {{ .Values.controllerManager.manager.containerSecurityContext.privileged
             }}
-          readOnlyRootFilesystem: {{ .Values.myOperatorControllerManager.manager.containerSecurityContext.readOnlyRootFilesystem
+          readOnlyRootFilesystem: {{ .Values.controllerManager.manager.containerSecurityContext.readOnlyRootFilesystem
             }}
-          runAsNonRoot: {{ .Values.myOperatorControllerManager.manager.containerSecurityContext.runAsNonRoot
+          runAsNonRoot: {{ .Values.controllerManager.manager.containerSecurityContext.runAsNonRoot
             }}
-          runAsUser: {{ .Values.myOperatorControllerManager.manager.containerSecurityContext.runAsUser
+          runAsUser: {{ .Values.controllerManager.manager.containerSecurityContext.runAsUser
             }}
-          seccompProfile: {{- include "tplvalues.render" (dict "value" .Values.myOperatorControllerManager.manager.containerSecurityContext.seccompProfile
+          seccompProfile: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.containerSecurityContext.seccompProfile
             "context" $) | nindent 12 }}
         volumeMounts:
         - mountPath: /controller_manager_config.yaml
@@ -88,8 +86,8 @@ spec:
           subPath: controller_manager_config.yaml
         - mountPath: /my.ca
           name: secret-volume
-        {{- if .Values.myOperatorControllerManager.manager.livenessProbe }}
-        livenessProbe: {{- include "tplvalues.render" (dict "value" .Values.myOperatorControllerManager.manager.livenessProbe "context" $) | nindent 10 }}
+        {{- if .Values.controllerManager.manager.livenessProbe }}
+        livenessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.livenessProbe "context" $) | nindent 10 }}
          {{- else }}
         livenessProbe:
          httpGet:
@@ -98,8 +96,8 @@ spec:
          initialDelaySeconds: 15
          periodSeconds: 20
         {{- end }}
-        {{- if .Values.myOperatorControllerManager.manager.readinessProbe }}
-        readinessProbe: {{- include "tplvalues.render" (dict "value" .Values.myOperatorControllerManager.manager.readinessProbe "context" $) | nindent 10 }}
+        {{- if .Values.controllerManager.manager.readinessProbe }}
+        readinessProbe: {{- include "tplvalues.render" (dict "value" .Values.controllerManager.manager.readinessProbe "context" $) | nindent 10 }}
          {{- else }}
         readinessProbe:
          httpGet:
@@ -109,18 +107,18 @@ spec:
          periodSeconds: 10
         {{- end }}
       imagePullSecrets:
-      - name: {{ include "operator.fullname" . }}-my-operator-secret-registry-credentials
+      - name: {{ include "operator.fullname" . }}-secret-registry-credentials
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: {{ include "operator.fullname" . }}-my-operator-controller-manager
+      serviceAccountName: {{ include "operator.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
       - configMap:
-          name: {{ include "operator.fullname" . }}-my-operator-manager-config
+          name: {{ include "operator.fullname" . }}-manager-config
         name: manager-config
       - name: secret-volume
         secret:
-          secretName: {{ include "operator.fullname" . }}-my-operator-secret-ca
+          secretName: {{ include "operator.fullname" . }}-secret-ca
 {{- if .Values.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" $) | nindent 8 }}
 {{- end }}

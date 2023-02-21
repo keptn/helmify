@@ -1,9 +1,9 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: {{ include "operator.fullname" . }}-my-operator-mutating-webhook-configuration
+  name: {{ include "operator.fullname" . }}-mutating-webhook-configuration
   annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "operator.fullname" . }}-my-operator-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "operator.fullname" . }}-serving-cert
   labels:
   {{- include "operator.labels" . | nindent 4 }}
 webhooks:
@@ -11,7 +11,7 @@ webhooks:
   - v1
   clientConfig:
     service:
-      name: '{{ include "operator.fullname" . }}-my-operator-webhook-service'
+      name: '{{ include "operator.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
       path: /mutate-ceph-example-com-v1-mycluster
   failurePolicy: Fail

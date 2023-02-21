@@ -1,5 +1,4 @@
-kubernetesClusterDomain: cluster.local
-myOperatorControllerManager:
+controllerManager:
   kubeRbacProxy:
     image:
       repository: gcr.io/kubebuilder/kube-rbac-proxy
@@ -43,13 +42,8 @@ myOperatorControllerManager:
         cpu: 100m
         memory: 20Mi
   replicas: 1
-myOperatorControllerManagerMetricsService:
-  ports:
-  - name: https
-    port: 8443
-    targetPort: https
-  type: ClusterIP
-myOperatorManagerConfig:
+kubernetesClusterDomain: cluster.local
+managerConfig:
   controllerManagerConfigYaml:
     health:
       healthProbeBindAddress: :8081
@@ -64,25 +58,31 @@ myOperatorManagerConfig:
     webhook:
       port: 9443
   dummyconfigmapkey: dummyconfigmapvalue
-myOperatorSecretCa:
-  caCrt: ""
-myOperatorSecretRegistryCredentials:
-  dockerconfigjson: ""
-myOperatorSecretVars:
-  var1: ""
-  var2: ""
-myOperatorWebhookService:
+metricsService:
   ports:
-  - port: 443
-    targetPort: 9443
+  - name: https
+    port: 8443
+    targetPort: https
   type: ClusterIP
 nodeSelector: {}
 pvc:
-  myOperatorPvcLim:
+  pvcLim:
     storageClass: cust1-mypool-lim
     storageRequest: 2Gi
+secretCa:
+  caCrt: ""
+secretRegistryCredentials:
+  dockerconfigjson: ""
+secretVars:
+  var1: ""
+  var2: ""
 tolerations: []
 topologySpreadConstraints:
 - maxSkew: 1
   topologyKey: kubernetes.io/hostname
   whenUnsatisfiable: DoNotSchedule
+webhookService:
+  ports:
+  - port: 443
+    targetPort: 9443
+  type: ClusterIP
