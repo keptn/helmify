@@ -2,7 +2,7 @@ package constraints
 
 import (
 	"github.com/keptn/helmify/pkg/helmify"
-	corev1 "k8s.io/api/core/v1"
+	yamlformat "github.com/keptn/helmify/pkg/yaml"
 )
 
 const tolerations = "tolerations"
@@ -23,26 +23,24 @@ const tolerationsExpression = "{{- if .Values.tolerations }}\n" +
 
 // ProcessSpecMap adds 'topologyConstraints' to the podSpec in specMap, if it doesn't
 // already has one defined.
-func ProcessSpecMap(specMap string, values *helmify.Values, podspec corev1.PodSpec) string {
+func ProcessSpecMap(name string, specMap map[string]interface{}, values *helmify.Values) string {
 
-	(*values)[topology] = podspec.TopologySpreadConstraints
-	(*values)[nodeSelector] = podspec.NodeSelector
-	(*values)[tolerations] = podspec.Tolerations
+	mapConstraint(name, specMap, topology, []interface{}{}, values)
+	mapConstraint(name, specMap, tolerations, []interface{}{}, values)
+	mapConstraint(name, specMap, nodeSelector, map[string]string{}, values)
 
-	tp := (*values)[topology].([]corev1.TopologySpreadConstraint)
-	if len(tp) == 0 {
-		(*values)[topology] = []interface{}{}
+	spec, err := yamlformat.Marshal(specMap, 6)
+	if err != nil {
+		return ""
 	}
-	ns := (*values)[nodeSelector].(map[string]string)
-	if len(ns) == 0 {
-		(*values)[nodeSelector] = map[string]string{}
+	return spec + topologyExpression + nodeSelectorExpression + tolerationsExpression
+}
+
+func mapConstraint(name string, specMap map[string]interface{}, constraint string, override interface{}, values *helmify.Values) {
+	if specMap[constraint] != nil {
+		(*values)[name].(map[string]interface{})[constraint] = specMap[constraint].(interface{})
+	} else {
+		(*values)[name].(map[string]interface{})[constraint] = override
 	}
-
-	tl := (*values)[tolerations].([]corev1.Toleration)
-
-	if len(tl) == 0 {
-		(*values)[tolerations] = []interface{}{}
-	}
-
-	return specMap + topologyExpression + nodeSelectorExpression + tolerationsExpression
+	delete(specMap, constraint)
 }

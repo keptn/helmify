@@ -182,13 +182,7 @@ func (d deployment) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstr
 		}
 
 	}
-
-	spec, err := yamlformat.Marshal(specMap, 6)
-	if err != nil {
-		return true, nil, err
-	}
-
-	spec = constraints.ProcessSpecMap(spec, &values, depl.Spec.Template.Spec)
+	spec := constraints.ProcessSpecMap(nameCamel, specMap, &values)
 	spec = strings.ReplaceAll(spec, "'", "")
 	spec = strings.ReplaceAll(spec, "|\n        ", "")
 	spec = strings.ReplaceAll(spec, "|-\n        ", "")
