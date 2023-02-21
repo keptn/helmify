@@ -49,7 +49,7 @@ const selectorTempl = `%[1]s
 {{- include "%[2]s.selectorLabels" . | nindent 6 }}
 %[3]s`
 
-const envValue = "{{ .Values.%[1]s.%[2]s.%[3]s.%[4]s }}"
+const envValue = "{{ .Values.%[1]s.%[2]s.%[3]s.%[4]s | quote }}"
 
 // New creates processor for k8s Deployment resource.
 func New() helmify.Processor {
