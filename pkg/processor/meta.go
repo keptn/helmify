@@ -14,6 +14,7 @@ const metaTeml = `apiVersion: %[1]s
 kind: %[2]s
 metadata:
   name: %[3]s
+  namespace: {{ .Release.Namespace | quote }}
   labels:
 %[5]s
   {{- include "%[4]s.labels" . | nindent 4 }}
@@ -47,9 +48,9 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 		}
 	}
 	templatedName := appMeta.TemplatedName(obj.GetName())
-	//if obj.GetKind() == "APIService" {
-	//	templatedName = obj.GetName()
-	//}
+	if obj.GetKind() == "APIService" {
+		templatedName = appMeta.TrimName(obj.GetName())
+	}
 	apiVersion, kind := obj.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
 	metaStr := fmt.Sprintf(metaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), labels, annotations)
 	metaStr = strings.Trim(metaStr, " \n")

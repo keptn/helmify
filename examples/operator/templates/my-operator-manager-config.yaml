@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "operator.fullname" . }}-my-operator-manager-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+  {{- include "operator.labels" . | nindent 4 }}
+data:
+  controller_manager_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    health:
+      healthProbeBindAddress: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.health.healthProbeBindAddress
+        | quote }}
+    kind: ControllerManagerConfig
+    leaderElection:
+      leaderElect: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.leaderElection.leaderElect
+        }}
+      resourceName: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.leaderElection.resourceName
+        | quote }}
+    metrics:
+      bindAddress: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.metrics.bindAddress
+        | quote }}
+    rook:
+      namespace: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.rook.namespace
+        | quote }}
+      toolboxPodLabel: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.rook.toolboxPodLabel
+        | quote }}
+    webhook:
+      port: {{ .Values.myOperatorManagerConfig.controllerManagerConfigYaml.webhook.port
+        }}
+  dummyconfigmapkey: {{ .Values.myOperatorManagerConfig.dummyconfigmapkey | quote
+    }}

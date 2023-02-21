@@ -99,11 +99,6 @@ func (a *Service) TemplatedString(str string) string {
 	return fmt.Sprintf(nameTeml, a.conf.ChartName, name)
 }
 
-func (a *Service) TemplatedValue(container string, str string) string {
-	name := a.TrimName(str)
-	return fmt.Sprintf(valuesTempl, a.conf.ChartName, container, name)
-}
-
 func extractAppNamespace(obj *unstructured.Unstructured) string {
 	if obj.GroupVersionKind() == nsGVK {
 		return obj.GetName()
