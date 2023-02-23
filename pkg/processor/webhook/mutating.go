@@ -19,7 +19,7 @@ const (
 	mwhTempl = `apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: %[2]s
+  name: {{ include "%[1]s.fullname" . }}-%[2]s
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "%[1]s.fullname" . }}-%[3]s
   labels:
