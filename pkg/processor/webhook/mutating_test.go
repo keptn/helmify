@@ -12,6 +12,10 @@ import (
 const mwhYaml = `apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
+  labels:
+    s.io/ca-from: "true"
+    aio/from: "true"
+    bio/from: "true"
   annotations:
     cert-manager.io/inject-ca-from: my-operator-system/my-operator-serving-cert
   name: my-operator-mutating-webhook-configuration
