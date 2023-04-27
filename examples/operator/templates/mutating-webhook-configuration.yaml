@@ -5,6 +5,9 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "operator.fullname" . }}-serving-cert
   labels:
+    a.sh/-cert: "true"
+    b.sh/inject-cert: "cuaiaio"
+    keptn.sh/inject-cert: "true"
   {{- include "operator.labels" . | nindent 4 }}
 webhooks:
 - admissionReviewVersions:

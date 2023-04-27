@@ -793,6 +793,10 @@ kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: my-operator-system/my-operator-serving-cert
+  labels:
+    keptn.sh/inject-cert: "true"
+    a.sh/-cert: "true"
+    b.sh/inject-cert: "cuaiaio"
   name: my-operator-mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
