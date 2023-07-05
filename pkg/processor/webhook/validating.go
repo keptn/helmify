@@ -22,7 +22,7 @@ metadata:
   name: {{ include "%[1]s.fullname" . }}-%[2]s
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "%[1]s.fullname" . }}-%[3]s
-  labels:
+  labels:%[5]s
   {{- include "%[1]s.labels" . | nindent 4 }}
 webhooks:
 %[4]s`
@@ -66,7 +66,13 @@ func (w vwh) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstructured
 	}
 	certName = strings.TrimPrefix(certName, appMeta.Namespace()+"/")
 	certName = appMeta.TrimName(certName)
-	res := fmt.Sprintf(vwhTempl, appMeta.ChartName(), name, certName, string(webhooks))
+
+	labels := ""
+	for key, val := range whConf.ObjectMeta.Labels {
+		labels += fmt.Sprintf(labelTemplate, key, val)
+	}
+
+	res := fmt.Sprintf(vwhTempl, appMeta.ChartName(), name, certName, string(webhooks), labels)
 	return true, &vwhResult{
 		name: name,
 		data: []byte(res),

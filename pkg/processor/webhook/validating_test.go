@@ -14,6 +14,8 @@ kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: my-operator-system/my-operator-serving-cert
+  labels:
+    keptn.sh/inject-cert: "true"
   name: my-operator-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -43,8 +45,9 @@ func Test_vwh_Process(t *testing.T) {
 
 	t.Run("processed", func(t *testing.T) {
 		obj := internal.GenerateObj(vwhYaml)
-		processed, _, err := testInstance.Process(&metadata.Service{}, obj)
+		processed, template, err := testInstance.Process(&metadata.Service{}, obj)
 		assert.NoError(t, err)
+		assert.NotNil(t, template)
 		assert.Equal(t, true, processed)
 	})
 	t.Run("skipped", func(t *testing.T) {
